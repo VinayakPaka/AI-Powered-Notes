@@ -2,7 +2,7 @@
 
 SmartNotes is a modern web application that allows users to create, manage, and organize notes with the power of AI summarization. This full-stack application is built with Next.js, TypeScript, TailwindCSS, and Supabase.
 
-![SmartNotes](https://via.placeholder.com/1200x630?text=SmartNotes+AI+Note+Taking+App)
+
 
 ## Features
 
