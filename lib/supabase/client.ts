@@ -9,7 +9,7 @@ export const createClient = () => {
     console.error("Missing Supabase client credentials")
     throw new Error("Missing Supabase client credentials")
   }
-  
+
   return createBrowserClient<Database>(
     supabaseUrl,
     supabaseAnonKey

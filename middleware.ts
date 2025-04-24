@@ -14,10 +14,10 @@ export async function middleware(request: NextRequest) {
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
       cookies: {
-        get(name: string) {
+        get(name) {
           return request.cookies.get(name)?.value
         },
-        set(name: string, value: string, options: { path: string; maxAge: number; domain?: string; sameSite?: 'lax' | 'strict' | 'none'; secure?: boolean; }) {
+        set(name, value, options) {
           request.cookies.set({
             name,
             value,
@@ -34,11 +34,11 @@ export async function middleware(request: NextRequest) {
             ...options,
           })
         },
-        remove(name: string, options: { path: string; domain?: string; }) {
+        remove(name, options) {
           request.cookies.set({
             name,
             value: '',
-            ...options,
+            ...(options || {}),
           })
           response = NextResponse.next({
             request: {
@@ -48,7 +48,7 @@ export async function middleware(request: NextRequest) {
           response.cookies.set({
             name,
             value: '',
-            ...options,
+            ...(options || {}),
           })
         },
       },

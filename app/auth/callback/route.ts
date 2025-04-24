@@ -3,13 +3,13 @@ import { NextResponse } from "next/server"
 
 export async function GET(request: Request) {
   try {
-    const requestUrl = new URL(request.url)
+  const requestUrl = new URL(request.url)
     console.log("Auth callback called with URL:", requestUrl.toString())
     
     const supabase = await createClient()
     
     // For code exchange flow (normal OAuth)
-    const code = requestUrl.searchParams.get("code")
+  const code = requestUrl.searchParams.get("code")
     console.log("Code present:", !!code)
     
     // For hash fragment flow (when we convert the hash to query params)
@@ -21,7 +21,7 @@ export async function GET(request: Request) {
     let authResult = null
     
     // Handle code exchange first (normal OAuth flow)
-    if (code) {
+  if (code) {
       console.log("Processing OAuth code exchange")
       try {
         authResult = await supabase.auth.exchangeCodeForSession(code)
@@ -31,7 +31,8 @@ export async function GET(request: Request) {
         }))
       } catch (codeError) {
         console.error("Error during code exchange:", codeError)
-        return NextResponse.redirect(new URL(`/?error=code_exchange_error&details=${encodeURIComponent(codeError.message || "Unknown")}`, request.url))
+        const errorMessage = codeError instanceof Error ? codeError.message : "Unknown error";
+        return NextResponse.redirect(new URL(`/?error=code_exchange_error&details=${encodeURIComponent(errorMessage)}`, request.url))
       }
     } 
     // Handle access token directly if present
@@ -48,7 +49,8 @@ export async function GET(request: Request) {
         }))
       } catch (tokenError) {
         console.error("Error during token processing:", tokenError)
-        return NextResponse.redirect(new URL(`/?error=token_error&details=${encodeURIComponent(tokenError.message || "Unknown")}`, request.url))
+        const errorMessage = tokenError instanceof Error ? tokenError.message : "Unknown error";
+        return NextResponse.redirect(new URL(`/?error=token_error&details=${encodeURIComponent(errorMessage)}`, request.url))
       }
     } else {
       // No auth information
@@ -72,12 +74,13 @@ export async function GET(request: Request) {
       console.log("Session established successfully, user ID:", session.session.user.id)
     } catch (sessionError) {
       console.error("Error checking session:", sessionError)
-      return NextResponse.redirect(new URL(`/?error=session_verification_error&details=${encodeURIComponent(sessionError.message || "Unknown")}`, request.url))
+      const errorMessage = sessionError instanceof Error ? sessionError.message : "Unknown error";
+      return NextResponse.redirect(new URL(`/?error=session_verification_error&details=${encodeURIComponent(errorMessage)}`, request.url))
     }
     
     // Successful authentication
     console.log("Auth successful, redirecting to dashboard")
-    return NextResponse.redirect(new URL("/dashboard", request.url))
+  return NextResponse.redirect(new URL("/dashboard", request.url))
   } catch (error) {
     // Log detailed error information
     console.error("Unexpected error in auth callback:", error)

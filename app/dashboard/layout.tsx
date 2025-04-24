@@ -11,7 +11,7 @@ export default async function DashboardLayout({
 }) {
   try {
     const supabase = await createClient()
-    
+  
     console.log("Dashboard layout: Checking auth session")
     
     // Get session and handle if not authenticated
@@ -21,23 +21,23 @@ export default async function DashboardLayout({
       console.error("Dashboard layout: Error fetching session:", error.message)
       redirect(`/?session_error=${encodeURIComponent(error.message)}`)
     }
-    
+  
     if (!data.session) {
       console.log("Dashboard layout: No session found, redirecting to login")
-      redirect("/")
-    }
-    
+    redirect("/")
+  }
+  
     console.log("Dashboard layout: Session found for user", data.session.user.id)
     
     // If we have a session, render the dashboard
-    return (
-      <div className="flex min-h-screen flex-col">
+  return (
+    <div className="flex min-h-screen flex-col">
         <DashboardNav user={data.session.user} />
-        <main className="flex-1">
-          {children}
-        </main>
-      </div>
-    )
+      <main className="flex-1">
+        {children}
+      </main>
+    </div>
+  )
   } catch (error) {
     console.error("Dashboard layout: Unexpected error:", error)
     redirect("/?error=dashboard_layout")

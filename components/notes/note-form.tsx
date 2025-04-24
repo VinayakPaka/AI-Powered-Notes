@@ -23,6 +23,7 @@ import {
 import { Card, CardContent } from "@/components/ui/card"
 import { Icons } from "@/components/icons"
 import { Database } from "@/types/supabase"
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 
 type Note = Database["public"]["Tables"]["notes"]["Row"]
 
@@ -41,6 +42,8 @@ interface NoteFormProps {
 
 export default function NoteForm({ userId, note, isEditing = false }: NoteFormProps) {
   const [isSummarizing, setIsSummarizing] = useState(false)
+  const [currentSummary, setCurrentSummary] = useState<string | null>(note?.summary || null)
+  const [apiError, setApiError] = useState<string | null>(null)
   const { supabase } = useSupabase()
   const { toast } = useToast()
   const router = useRouter()
@@ -61,6 +64,7 @@ export default function NoteForm({ userId, note, isEditing = false }: NoteFormPr
           .update({
             title: values.title,
             content: values.content,
+            summary: currentSummary,
             updated_at: new Date().toISOString(),
           })
           .eq("id", note.id)
@@ -74,6 +78,7 @@ export default function NoteForm({ userId, note, isEditing = false }: NoteFormPr
             user_id: userId,
             title: values.title,
             content: values.content,
+            summary: currentSummary,
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString(),
           })
@@ -116,13 +121,25 @@ export default function NoteForm({ userId, note, isEditing = false }: NoteFormPr
       }
       
       try {
+        // Clear previous summary, errors, and show loading state
+        setApiError(null)
+        setCurrentSummary(null)
         setIsSummarizing(true)
-        const response = await fetch("/api/summarize", {
+        
+        // Add timestamp to ensure we get a fresh summary every time
+        const timestamp = new Date().getTime()
+        const response = await fetch(`/api/summarize?t=${timestamp}`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({ text: values.content }),
+          body: JSON.stringify({ 
+            text: values.content,
+            forceNew: true, // Signal backend to generate new summary
+            timestamp: timestamp // Add timestamp in body too
+          }),
+          // Prevent caching
+          cache: 'no-store'
         })
         
         const data = await response.json()
@@ -139,34 +156,21 @@ export default function NoteForm({ userId, note, isEditing = false }: NoteFormPr
     },
     onSuccess: (summary) => {
       if (summary) {
+        setCurrentSummary(summary)
+        
         toast({
           title: "Summary generated",
           description: "AI summary has been generated successfully.",
         })
-        
-        // If we're editing, update the note with the summary
-        if (isEditing && note) {
-          supabase
-            .from("notes")
-            .update({ summary })
-            .eq("id", note.id)
-            .then(({ error }) => {
-              if (error) {
-                toast({
-                  title: "Error",
-                  description: "Failed to save summary. Please try again.",
-                  variant: "destructive",
-                })
-              }
-            })
-        }
       }
     },
     onError: (error) => {
       console.error("Error generating summary:", error);
+      const errorMessage = error instanceof Error ? error.message : "Failed to generate summary. Please try again.";
+      setApiError(errorMessage);
       toast({
         title: "Error",
-        description: error instanceof Error ? error.message : "Failed to generate summary. Please try again.",
+        description: errorMessage,
         variant: "destructive",
       })
     }
@@ -208,13 +212,21 @@ export default function NoteForm({ userId, note, isEditing = false }: NoteFormPr
               )}
             />
             
-            {note?.summary && (
+            {apiError && (
+              <Alert variant="destructive" className="animate-fadeIn">
+                <Icons.close className="h-4 w-4" />
+                <AlertTitle>Error</AlertTitle>
+                <AlertDescription>{apiError}</AlertDescription>
+              </Alert>
+            )}
+            
+            {currentSummary && (
               <div className="rounded-md border border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-950/30 p-6 transition-all duration-300 hover:shadow-md animate-fadeIn">
                 <h3 className="mb-3 font-medium flex items-center text-blue-800 dark:text-blue-300">
                   <Icons.ai className="mr-2 h-5 w-5 text-blue-600 dark:text-blue-400" />
                   AI Summary
                 </h3>
-                <p className="text-sm leading-relaxed text-blue-700 dark:text-blue-200 italic">{note.summary}</p>
+                <p className="text-sm leading-relaxed text-blue-700 dark:text-blue-200 italic">{currentSummary}</p>
               </div>
             )}
             

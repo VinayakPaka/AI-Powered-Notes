@@ -15,7 +15,8 @@ export async function POST(request: Request) {
     }
     
     // Get request body
-    const { text } = await request.json()
+    const body = await request.json()
+    const { text, forceNew = false } = body
     
     if (!text || typeof text !== "string" || text.trim().length < 50) {
       return NextResponse.json(
@@ -42,6 +43,9 @@ export async function POST(request: Request) {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
+            "Cache-Control": "no-cache, no-store, must-revalidate",
+            "Pragma": "no-cache",
+            "Expires": "0"
           },
           body: JSON.stringify({
             contents: [{
@@ -50,13 +54,41 @@ export async function POST(request: Request) {
                   text: `Summarize the following text in a concise paragraph using direct language. Do not refer to "the author" or use phrases like "the author is considering" - instead provide a straightforward summary of the key points. Make it no more than 3 sentences.\n\n${text}`
                 }
               ]
-            }]
+            }],
+            generationConfig: {
+              // Vary temperature based on forceNew to get different results each time
+              temperature: forceNew ? (0.5 + Math.random() * 0.4) : 0.5,
+              topP: 0.95,
+              topK: forceNew ? 40 + Math.floor(Math.random() * 20) : 40,
+              maxOutputTokens: 200,
+              // Add current timestamp to prompt to ensure varied responses
+              candidateCount: 1,
+            },
+            // Add safety settings to ensure appropriate content
+            safetySettings: [
+              {
+                category: "HARM_CATEGORY_HATE_SPEECH",
+                threshold: "BLOCK_ONLY_HIGH"
+              },
+              {
+                category: "HARM_CATEGORY_DANGEROUS_CONTENT",
+                threshold: "BLOCK_ONLY_HIGH"
+              },
+              {
+                category: "HARM_CATEGORY_SEXUALLY_EXPLICIT",
+                threshold: "BLOCK_ONLY_HIGH"
+              },
+              {
+                category: "HARM_CATEGORY_HARASSMENT",
+                threshold: "BLOCK_ONLY_HIGH"
+              }
+            ]
           }),
           // Set a reasonable timeout
           signal: AbortSignal.timeout(15000),
         }
       );
-      
+    
       if (!response.ok) {
         const errorText = await response.text();
         console.error("Google Gemini API error:", response.status, errorText);
@@ -81,7 +113,13 @@ export async function POST(request: Request) {
       
       console.log("Google Gemini summary successfully generated");
       
-      return NextResponse.json({ summary })
+      // Add no-cache headers to the response
+      const responseWithHeaders = NextResponse.json({ summary });
+      responseWithHeaders.headers.set('Cache-Control', 'no-store, max-age=0');
+      responseWithHeaders.headers.set('Pragma', 'no-cache');
+      responseWithHeaders.headers.set('Expires', '0');
+      
+      return responseWithHeaders;
     } catch (apiError) {
       console.error("Google Gemini API request error:", apiError);
       return NextResponse.json(

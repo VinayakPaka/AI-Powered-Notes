@@ -1,4 +1,5 @@
-import { Loader2, LucideCrop as LucideProps, NotepadText as Notepad, Moon, Sun, Trash, X, PenSquare, Plus, LogOut, Settings, Check, Save, Cpu, ChevronDown, ChevronsUpDown, Github, FileText, RefreshCw, Search } from "lucide-react"
+import { Loader2, NotepadText as Notepad, Moon, Sun, Trash, X, PenSquare, Plus, LogOut, Settings, Check, Save, Cpu, ChevronDown, ChevronsUpDown, Github, FileText, RefreshCw, Search } from "lucide-react"
+import type { LucideProps } from "lucide-react"
 
 export type IconProps = LucideProps
 
