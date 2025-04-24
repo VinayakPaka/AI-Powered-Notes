@@ -1,97 +1,186 @@
-# AI-Powered Notes App
+# SmartNotes - AI-Powered Note-Taking Application
 
-A full-stack application built with Next.js, TypeScript, TailwindCSS, and Supabase that allows users to create, edit, and delete notes with AI-powered summarization.
+SmartNotes is a modern web application that allows users to create, manage, and organize notes with the power of AI summarization. This full-stack application is built with Next.js, TypeScript, TailwindCSS, and Supabase.
+
+![SmartNotes](https://via.placeholder.com/1200x630?text=SmartNotes+AI+Note+Taking+App)
 
 ## Features
 
-- **Authentication**: Sign up and login with email/password or Google authentication
-- **Notes Management**: Create, edit, and delete personal notes
-- **AI Summarization**: Generate concise summaries of your notes using the DeepSeek API
-- **Responsive Design**: Works seamlessly on all device sizes
-- **Dark/Light Mode**: Toggle between dark and light theme based on preference
+- **Authentication** - Secure login, registration, and OAuth integration with Google
+- **Note Management** - Create, edit, delete, and organize your notes
+- **AI Summarization** - Generate concise summaries of your notes using Google Gemini AI
+- **Responsive Design** - Works seamlessly across desktop, tablet, and mobile
+- **Theming Support** - Dark and light mode with system preference detection
+- **Real-time Data** - Instant updates with Supabase real-time subscriptions
 
 ## Tech Stack
 
-- **Frontend**: Next.js 13 (with App Router), TypeScript, TailwindCSS, Shadcn UI
-- **Backend**: Supabase (Authentication, Database)
-- **State Management**: React Query for data fetching and caching
-- **AI Integration**: DeepSeek API for note summarization
-- **Styling**: TailwindCSS with Shadcn UI components
-- **Deployment**: Ready for Vercel deployment
+- **Frontend Framework**: Next.js 13 (App Router)
+- **Language**: TypeScript
+- **Styling**: TailwindCSS with Shadcn/ui components
+- **Authentication & Database**: Supabase
+- **AI Integration**: Google Gemini API
+- **State Management**: React Query
 
-## Setup Instructions
+## Prerequisites
 
-### Prerequisites
+Before you begin, ensure you have the following:
 
-- Node.js 16+ and npm/yarn
-- Supabase account
-- DeepSeek API key (or Groq API key as fallback)
+- Node.js (v18 or newer)
+- npm or yarn
+- A Supabase account (free tier works)
+- Google Gemini API key for AI summarization
 
-### Installation
+## Environment Setup
 
-1. Clone the repository
+Create a `.env.local` file in the root directory with the following variables:
+
+```
+# Supabase Configuration
+NEXT_PUBLIC_SUPABASE_URL=your-supabase-url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-supabase-anon-key
+
+# Google Gemini API
+GOOGLE_GEMINI_API_KEY=your-gemini-api-key
+```
+
+## Installation
+
+1. Clone the repository:
    ```bash
-   git clone <repository-url>
-   cd ai-notes-app
+   git clone https://github.com/VinayakPaka/AI-Powered-Notes.git
+   cd project
    ```
 
-2. Install dependencies
+2. Install dependencies:
    ```bash
    npm install
    ```
 
-3. Set up environment variables
-   - Copy `.env.example` to `.env.local`
-   - Fill in your Supabase and API keys
+3. Set up the database:
+   - Go to your Supabase project
+   - Create tables according to the types defined in `types/supabase.ts`
+   - Set up authentication providers (Email/Password and Google OAuth)
 
-4. Set up Supabase
-   - Create a new Supabase project
-   - Run the migrations in the `supabase/migrations` folder to set up the database schema
-   - Configure authentication providers (Email/Password and Google)
-
-5. Run the development server
+4. Start the development server:
    ```bash
    npm run dev
    ```
 
-## Deployment
+5. Open your browser and navigate to `http://localhost:3000`
 
-This application is configured for easy deployment on Vercel:
+## Database Schema
 
-1. Push your repository to GitHub
-2. Connect your GitHub repository to Vercel
-3. Configure environment variables in Vercel
-4. Deploy!
+The application uses the following database structure:
+
+### Notes Table
+- `id`: UUID (primary key)
+- `user_id`: UUID (foreign key to auth.users)
+- `title`: String
+- `content`: Text
+- `summary`: Text (nullable)
+- `created_at`: Timestamp
+- `updated_at`: Timestamp
+
+### Profiles Table
+- `id`: UUID (primary key, matches auth.users.id)
+- `email`: String
+- `full_name`: String (nullable)
+- `avatar_url`: String (nullable)
+- `updated_at`: Timestamp (nullable)
 
 ## Project Structure
 
 ```
-├── app/                  # Next.js App Router
+├── app/                  # Next.js App Router pages
 │   ├── api/              # API routes
-│   ├── auth/             # Authentication pages
-│   ├── dashboard/        # Dashboard pages
-│   └── page.tsx          # Home/landing page
+│   │   └── summarize/    # AI summarization endpoint
+│   ├── auth/             # Authentication routes
+│   ├── dashboard/        # Dashboard and note management
+│   └── page.tsx          # Landing page
 ├── components/           # React components
 │   ├── auth/             # Authentication components
 │   ├── dashboard/        # Dashboard components
 │   ├── notes/            # Note-related components
 │   └── ui/               # UI components (Shadcn UI)
+├── hooks/                # Custom React hooks
 ├── lib/                  # Utility functions
-│   └── supabase/         # Supabase client
+│   └── supabase/         # Supabase client configuration
 ├── providers/            # React context providers
-├── types/                # TypeScript type definitions
-└── supabase/             # Supabase migrations
+│   └── supabase-provider.tsx # Supabase auth provider
+├── public/               # Static assets
+└── types/                # TypeScript type definitions
+    └── supabase.ts       # Generated Supabase types
 ```
+
+## Authentication Flow
+
+The application uses Supabase Authentication with the following flow:
+
+1. User signs up/logs in via email/password or OAuth (Google)
+2. On successful authentication, user is redirected to the callback route
+3. The callback route exchanges the auth code for a session
+4. User is redirected to the dashboard
+5. A middleware ensures protected routes require authentication
+
+## AI Summarization
+
+Notes can be automatically summarized using the Google Gemini API:
+
+1. When a user creates or updates a note, they can request a summary
+2. The frontend sends the note content to the `/api/summarize` endpoint
+3. The API validates the request and calls the Google Gemini API
+4. The summary is returned and stored with the note
+
+## Deployment
+
+### Deploying to Vercel
+
+1. Push your code to a Git repository (GitHub, GitLab, etc.)
+2. Create a new project on Vercel and import your repository
+3. Set up the environment variables in the Vercel dashboard
+4. Deploy the application
+
+### Manual Deployment
+
+To build the application for production:
+
+```bash
+npm run build
+```
+
+Then start the production server:
+
+```bash
+npm start
+```
+
+## Development Workflow
+
+1. Create feature branches for new features or bug fixes
+2. Make changes and test locally
+3. Create a pull request to the main branch
+4. After review, merge changes
+5. Deploy to production
+
+## Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add some amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
 
 ## License
 
-MIT
+This project is licensed under the MIT License - see the LICENSE file for details.
 
-## DeepSeek API Integration
+## Acknowledgments
 
-If you want to use the DeepSeek API for AI summaries:
-
-1. Register for a DeepSeek API key at https://platform.deepseek.com
-2. Add your key to the `.env.local` file as `DEEPSEEK_API_KEY=your-key`
-
-If no DeepSeek API key is provided, the app will fall back to a simple extractive summarization method that works locally without API calls.
+- [Next.js](https://nextjs.org/)
+- [Supabase](https://supabase.io/)
+- [Tailwind CSS](https://tailwindcss.com/)
+- [Shadcn/ui](https://ui.shadcn.com/)
+- [Google Gemini](https://ai.google.dev/)
